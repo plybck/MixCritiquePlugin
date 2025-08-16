@@ -21,8 +21,12 @@ jobs:
         run: python -m zipfile -e mixcritique_plugin.zip .
       - name: Clone JUCE
         run: git clone --depth 1 --branch 7.0.9 https://github.com/juce-framework/JUCE.git
+      - name: Build JUCE
+        run: |
+          cmake -S JUCE -B JUCE/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/juce_install
+          cmake --build JUCE/build --config Release --target install
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${{ github.workspace }}/JUCE
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${{ github.workspace }}/juce_install
       - name: Build
         run: cmake --build build --config Release
       - name: Upload VST3
