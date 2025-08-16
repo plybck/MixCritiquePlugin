@@ -1,0 +1,37 @@
+name: build-mixcritique
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'mixcritique_plugin.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Unzip source
+        run: |
+          python - <<'PY'
+import zipfile, os
+zipfile.ZipFile('mixcritique_plugin.zip').extractall('.')
+PY
+      - name: Clone JUCE
+        run: git clone --depth 1 --branch 7.0.9 https://github.com/juce-framework/JUCE.git
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${{ github.workspace }}/JUCE
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: mixcritique-${{ runner.os }}-vst3
+          path: build/**/MixCritique*.vst3
